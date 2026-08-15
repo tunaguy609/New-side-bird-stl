@@ -1,0 +1,314 @@
+// TROLLING BIRD STARBOARD — FAITHFUL MODIFICATION v4
+// =====================================================
+// Based on the original Trolling Bird Starboard STL.
+//
+// Modifications:
+//   1. Center bore = 2.4 mm
+//   2. Body made 15% fuller
+//   3. Existing wings/fins enlarged 15%
+//   4. Bottom tail fin extended 20 mm forward
+//
+// IMPORTANT:
+// The original STL must be in the same folder as this SCAD file
+// and named exactly:
+//
+// Trolling Bird Starboard.stl
+//
+// Units: millimeters
+// =====================================================
+
+
+// =====================================================
+// USER PARAMETERS
+// =====================================================
+
+// Center leader bore
+bore_diameter = 2.4;
+
+
+// Body fullness
+//
+// 1.00 = original body
+// 1.10 = 10% fuller
+// 1.15 = 15% fuller
+// 1.20 = 20% fuller
+//
+body_fullness = 1.15;
+
+
+// Wing / fin enlargement
+//
+// 1.00 = original
+// 1.10 = 10% larger
+// 1.15 = 15% larger
+// 1.20 = 20% larger
+//
+wing_scale = 1.15;
+
+
+// Additional forward travel of bottom tail fin
+//
+bottom_fin_extension = 20;
+
+
+// =====================================================
+// ORIGINAL MASTER STL
+// =====================================================
+
+module original() {
+
+    import(
+        "Trolling Bird Starboard.stl",
+        convexity = 10
+    );
+
+}
+
+
+// =====================================================
+// ORIGINAL BODY REGION
+// =====================================================
+//
+// The original STL is approximately:
+//
+// X = -50 to 100.194 mm
+// Y = -55 to 55 mm
+// Z = 0 to 32 mm
+//
+// The central body region is isolated so the body can
+// be made fuller without changing the outer wing tips.
+//
+
+module central_body_mask() {
+
+    intersection() {
+
+        // Main central body region
+        translate([
+            -50,
+            -18 * body_fullness,
+            0
+        ])
+
+        cube([
+            150.2,
+            36 * body_fullness,
+            32
+        ]);
+
+        // Rounded body envelope
+        translate([
+            -50,
+            -18 * body_fullness,
+            -2
+        ])
+
+        scale([
+            1,
+            body_fullness,
+            body_fullness
+        ])
+
+        cube([
+            150.2,
+            36,
+            36
+        ]);
+
+    }
+
+}
+
+
+// =====================================================
+// FULLER BODY
+// =====================================================
+//
+// The central body is enlarged while preserving the
+// original longitudinal profile.
+//
+
+module fuller_body() {
+
+    intersection() {
+
+        scale([
+            1,
+            body_fullness,
+            body_fullness
+        ])
+
+        original();
+
+        central_body_mask();
+
+    }
+
+}
+
+
+// =====================================================
+// ORIGINAL GEOMETRY WITHOUT CENTRAL BODY
+// =====================================================
+//
+// This allows the original fins and outer geometry
+// to remain intact.
+//
+
+module original_without_central_body() {
+
+    difference() {
+
+        original();
+
+        central_body_mask();
+
+    }
+
+}
+
+
+// =====================================================
+// ENLARGED WINGS / FINS
+// =====================================================
+//
+// The original fin/wing geometry is scaled outward
+// while the central body is handled separately.
+//
+
+module enlarged_fins() {
+
+    difference() {
+
+        union() {
+
+            intersection() {
+
+                scale([
+                    1,
+                    wing_scale,
+                    1
+                ])
+
+                original();
+
+                translate([
+                    -50,
+                    -60,
+                    0
+                ])
+
+                cube([
+                    150.2,
+                    120,
+                    32
+                ]);
+
+            }
+
+        }
+
+        // Keep the central body separate
+        central_body_mask();
+
+    }
+
+}
+
+
+// =====================================================
+// BOTTOM TAIL FIN EXTENSION
+// =====================================================
+//
+// Extends the lower tail fin farther forward along
+// the underside of the bird.
+//
+// Change bottom_fin_extension above to adjust it.
+//
+
+module bottom_fin_extension() {
+
+    hull() {
+
+        translate([
+            30,
+            -2.0,
+            0.2
+        ])
+
+        cube([
+            bottom_fin_extension,
+            4.0,
+            2.0
+        ]);
+
+        translate([
+            30,
+            -1.25,
+            0.2
+        ])
+
+        cube([
+            bottom_fin_extension,
+            2.5,
+            0.8
+        ]);
+
+    }
+
+}
+
+
+// =====================================================
+// FINAL ASSEMBLY
+// =====================================================
+//
+// Original geometry
+// + fuller body
+// + enlarged fins
+// + extended bottom fin
+// - new 2.4 mm center bore
+//
+
+difference() {
+
+    union() {
+
+        // Original outer geometry
+        original_without_central_body();
+
+        // Fuller central body
+        fuller_body();
+
+        // Enlarged wings and fins
+        enlarged_fins();
+
+        // Extended bottom tail fin
+        bottom_fin_extension();
+
+    }
+
+
+    // =================================================
+    // 2.4 MM STRAIGHT CENTER BORE
+    // =================================================
+
+    translate([
+        -55,
+        0,
+        16
+    ])
+
+    rotate([
+        0,
+        90,
+        0
+    ])
+
+    cylinder(
+        h = 160,
+        d = bore_diameter,
+        $fn = 64
+    );
+
+}
